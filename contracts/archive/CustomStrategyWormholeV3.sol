@@ -6,9 +6,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./utils/IUniswapV3.sol";
-import "./utils/Path.sol";
-import "./utils/BytesLib.sol";
+import "../utils/IUniswapV3.sol";
+import "../utils/Path.sol";
+import "../utils/BytesLib.sol";
 
 // Wormhole interfaces
 interface IWormhole {
