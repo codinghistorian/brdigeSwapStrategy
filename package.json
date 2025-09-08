@@ -1,0 +1,37 @@
+{
+  "name": "splyce-solidity-strategies",
+  "version": "1.0.0",
+  "description": "Splyce Solidity Strategies",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js",
+    "swap-single": "hardhat run scripts/pancakeswapActions/swapExactInputSingle.js --network bsc_main",
+    "attest-token": "node scripts/evmRelayerActions/attestToken.js",
+    "check-attestation": "node scripts/evmRelayerActions/attestToken.js --check",
+    "attest-token-legacy": "node scripts/evmRelayerActions/attestTokenLegacy.js",
+    "check-attestation-legacy": "node scripts/evmRelayerActions/attestTokenLegacy.js --check",
+    "attest-token-direct": "node scripts/evmRelayerActions/attestTokenDirect.js",
+    "check-attestation-direct": "node scripts/evmRelayerActions/attestTokenDirect.js --check",
+    "vaa-helper": "node scripts/evmRelayerActions/vaaHelper.js",
+    "check-contract": "node scripts/evmRelayerActions/checkContractFunctions.js",
+    "direct-redeem": "node scripts/evmRelayerActions/directTokenBridgeRedeem.js",
+    "simple-redeem": "node scripts/evmRelayerActions/useSimpleRedeem.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.3.0",
+    "@openzeppelin/contracts-upgradeable": "^5.3.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.0",
+    "@uniswap/sdk-core": "^7.7.2",
+    "@uniswap/v3-core": "^1.0.1",
+    "@uniswap/v3-periphery": "^1.4.4",
+    "@uniswap/v3-sdk": "^3.25.2",
+    "@wormhole-foundation/sdk": "^0.10.12",
+    "axios": "^1.11.0"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "SWAP_ROUTER_ADDRESS": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
+  "QUOTER_ADDRESS": "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
+  "tokens": {
+    "USDC": {
+      "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "decimals": 6,
+      "symbol": "USDC"
+    },
+    "WETH": {
+      "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "decimals": 18,
+      "symbol": "WETH"
+    },
+    "WBTC": {
+      "address": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+      "decimals": 8,
+      "symbol": "WBTC"
+    },
+    "TRX": {
+      "address": "0x50327c6c5a14DCaDE707ABad2E27eB517df87AB5",
+      "decimals": 6,
+      "symbol": "TRX"
+    },
+    "wstETH": {
+      "address": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+      "decimals": 18,
+      "symbol": "wstETH"
+    },
+    "WHITE": {
+      "address": "0x5F0E628B693018f639D10e4A4F59BD4d8B2B6B44",
+      "decimals": 18,
+      "symbol": "WHITE"
+    },
+    "SEI": {
+      "address": "0xbdF43ecAdC5ceF51B7D1772F722E40596BC1788B",
+      "decimals": 18,
+      "symbol": "SEI"
+    },
+    "USDT": {
+      "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "decimals": 6,
+      "symbol": "USDT"
+    }
+  },
+  "pools": [
+    {
+      "name": "WETH/USDC",
+      "tokens": ["USDC", "WETH"],
+      "fee": 500
+    },
+    {
+      "name": "wstETH/WETH",
+      "tokens": ["wstETH", "WETH"],
+      "fee": 100
+    },
+    {
+      "name": "WBTC/USDC",
+      "tokens": ["USDC", "WBTC"],
+      "fee": 3000
+    },
+    {
+      "name": "TRX/WETH",
+      "tokens": ["TRX", "WETH"],
+      "fee": 500
+    },
+    {
+      "name": "WHITE/WETH",
+      "tokens": ["WHITE", "WETH"],
+      "fee": 100
+    },
+    {
+      "name": "USDC/SEI",
+      "tokens": ["USDC", "SEI"],
+      "fee": 3000
+    },
+    {
+      "name": "USDC/USDT",
+      "tokens": ["USDC", "USDT"],
+      "fee": 100
+    }
+  ],
+  "swaps": [
+    {
+      "name": "USDC to WBTC (Single Hop)",
+      "path": ["USDC", "WBTC"]
+    },
+    {
+      "name": "USDC to wstETH (Multi-Hop)",
+      "path": ["USDC", "WETH", "wstETH"]
+    },
+    {
+      "name": "USDC to TRX (Multi-Hop)",
+      "path": ["USDC", "WETH", "TRX"]
+    },
+    {
+      "name": "USDC to WHITE (Multi-Hop)",
+      "path": ["USDC", "WETH", "WHITE"]
+    },
+    {
+      "name": "USDC to SEI (Single Hop)",
+      "path": ["USDC", "SEI"]
+    },
+    {
+      "name": "USDC to WETH (Single Hop)",
+      "path": ["USDC", "WETH"]
+    },
+    {
+      "name": "USDC to USDT (Single Hop)",
+      "path": ["USDC", "USDT"]
+    }
+  ]
+}
