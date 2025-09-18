@@ -1,292 +1,186 @@
-# Splyce Solidity Strategies - Wormhole Integration
+# BridgeSwapStrategy – Wormhole Bridge + Uniswap V3 / PancakeSwap V3
 
-This directory contains Solidity contracts for cross-chain strategy execution using Wormhole protocol, designed to work seamlessly with the Splyce Solana vault system.
+This repository contains the upgradeable `BridgeSwapStrategy` contract that:
+- Bridges ERC‑20 tokens via Wormhole TokenBridge
+- Executes swaps on Uniswap V3 and PancakeSwap V3
+- Enforces role‑based access control and pausability
 
-## Overview
+No Uniswap V2/V4 integrations, token whitelists, portfolio tracking, or custom VAA parsing/replay protection are implemented.
 
-The `CustomStrategyWormhole` contract enables:
-- Cross-chain token transfers from Solana to Ethereum/EVM chains via Wormhole
-- Execution of DeFi strategies on Ethereum (Uniswap V2/V3/V4)
-- Value reporting and portfolio management across chains
-- Secure token bridging back to Solana vaults
+## Deployed Contracts
 
-## Architecture
+- Ethereum Mainnet: `0xf90e6E8E1faFFCf4a204e45b3806390a877fcd7B`
+- BSC Mainnet: `0x4F3862D359D8f76498f69732740E4d53b7676639`
 
-### Cross-Chain Flow
-1. **Solana → Ethereum**: Tokens are bridged from Solana vaults via Wormhole Token Bridge
-2. **Strategy Execution**: Ethereum contract receives tokens and executes DeFi strategies
-3. **Value Reporting**: Portfolio values are calculated and reported back to Solana
-4. **Token Return**: Profits/assets can be bridged back to Solana vaults
+### Ethereum Mainnet Initialization
 
-### Supported Strategies
-- **Uniswap V2**: Classic AMM swaps with multi-hop routing
-- **Uniswap V3**: Concentrated liquidity swaps with fee tiers
-- **Uniswap V4**: Next-generation swaps with hooks and custom logic
-- **Custom Strategies**: Extensible framework for additional DeFi protocols
+- Wormhole Core: `0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B`
+- Wormhole TokenBridge: `0x3ee18B2214AFF97000D974cf647E7C347E8fa585`
+- Underlying Token (USDC): `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48`
+- Uniswap V3 Router (SwapRouter02): `0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45`
+- PancakeSwap Router: `0x1b81D678ffb9C0263b24A97847620C99d213eB14`
+- Solana WormholeAssetManager (base58): `2Bqh5uNnKHXQBNLfkK8Je8xvZ6SUis5RH4Ngif4hT3FL`
+- Solana Aggregator Address (hex): `0x11a28cdc1df53b02a753adf7d6f498ce0677d7b7e1018f41d806a335fcb921f7`
 
-## Features
+For EVM relayer usage, see: `evm_relayer_use_guide`.
 
-### Security
-- **Access Control**: Role-based permissions (ADMIN, REPORTING_MANAGER)
-- **Pausable**: Emergency stop functionality
-- **Reentrancy Protection**: Prevents reentrancy attacks
-- **Token Whitelisting**: Only approved tokens can be processed
-- **VAA Verification**: All Wormhole messages are cryptographically verified
+## Contract Overview
 
-### Cross-Chain Messaging
-- **Wormhole Integration**: Native Wormhole protocol support
-- **Message Verification**: VAA (Verifiable Action Approval) validation
-- **Replay Protection**: Prevents duplicate message processing
-- **Emitter Registration**: Authorized Solana programs only
+`BridgeSwapStrategy` (Upgradeable)
+- Inherits: `Initializable`, `AccessControlUpgradeable`, `PausableUpgradeable`
+- Roles: `DEFAULT_ADMIN_ROLE`, `ADMIN`, `REPORTING_MANAGER`
+- Constants: `SOLANA_CHAIN_ID = 1`
 
-### Portfolio Management
-- **Balance Tracking**: Real-time token balance monitoring
-- **Active Token Management**: Efficient storage for non-zero balances
-- **Value Reporting**: Portfolio valuation in multiple tokens
-- **Slippage Protection**: Configurable slippage limits
+Key Storage
+- `address underlyingToken`
+- `IWormhole wormhole`, `ITokenBridge tokenBridge`
+- `bytes32 solanaAggregatorAddress`
+- `IUniswapV3 swapRouter`, `IV3SwapRouter pancakeSmartRouter`
+- `mapping(bytes32 => bool) isPathAllowed`, `bool isPathValidationEnabled`
 
-## Setup
+## External Interface
 
-### Prerequisites
-- Node.js 16+ and npm
-- Hardhat development environment
-- Access to Ethereum/Sepolia networks
-- Wormhole guardian network access
-
-### Installation
-
-```bash
-cd solidity-strategies
-npm install
-```
-
-### Environment Configuration
-
-Create a `.env` file:
-```bash
-# Network RPC URLs
-ETHEREUM_RPC_URL=https://eth-mainnet.alchemyapi.io/v2/YOUR_KEY
-SEPOLIA_RPC_URL=https://eth-sepolia.alchemyapi.io/v2/YOUR_KEY
-
-# Deployment wallet
-PRIVATE_KEY=your_private_key_here
-
-# Wormhole Configuration
-WORMHOLE_CORE_ADDRESS=0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B
-WORMHOLE_TOKEN_BRIDGE=0x3ee18B2214AFF97000D974cf647E7C347E8fa585
-```
-
-### Compilation
-
-```bash
-npm run compile
-```
-
-### Deployment
-
-```bash
-# Deploy to Sepolia testnet
-npm run deploy -- --network sepolia
-
-# Deploy to Ethereum mainnet  
-npm run deploy -- --network ethereum
-```
-
-## Contract Interface
-
-### Core Functions
-
-#### Token Management
+Initialization
 ```solidity
-function receiveWormholeTokens(bytes memory encodedVm) external
-function sendTokensToSolana(address token, uint256 amount, bytes memory data) external
-function getTokenBalance(address token) external view returns (uint256)
-function getAllActiveTokens() external view returns (address[] memory, uint256[] memory)
+function initialize(
+    address _wormhole,
+    address _tokenBridge,
+    address _underlyingToken,
+    bytes32 _solanaAggregatorAddress,
+    address _swapRouter,
+    address _pancakeSmartRouter
+) external initializer
 ```
 
-#### Strategy Execution
+Deposits
 ```solidity
-function executeSwap(SwapInstruction memory instruction) external returns (uint256 amountOut)
-function batchSwap(SwapInstruction[] memory instructions) external returns (uint256[] memory)
+function deposit(address token, uint256 amount) external onlyReportingManager whenNotPaused
 ```
 
-#### Value Reporting
+Bridging
 ```solidity
-function getTotalValue(address baseToken) external view returns (uint256)
-function reportValueToSolana(address baseToken) external
+// Bridges underlying token to Solana (chainId = 1). Requires msg.value >= wormhole.messageFee().
+function bridgeOutToSolana(uint256 amount) external payable onlyReportingManager whenNotPaused
+
+// Completes a Wormhole TokenBridge transfer (payload variant) using a VAA.
+function bridgeInFromSolana(bytes memory encodedVAA) external onlyReportingManager
+
+// Minimal, generic bridge out with empty payload; uses entire msg.value as fee.
+function bridgeOut(address token, uint256 amount, uint16 destinationChainId, bytes32 recipient)
+    external payable onlyReportingManager
+
+// Minimal bridge in placeholder (emits with zeroed values; no VAA decoding yet).
+function bridgeIn(bytes memory encodedVAA) external onlyReportingManager
 ```
 
-### Administrative Functions
-
-#### Access Control
+Uniswap V3 Swaps
 ```solidity
-function whitelistToken(address token, bool whitelisted) external onlyRole(ADMIN)
-function registerEmitter(bytes32 emitter, bool registered) external onlyRole(ADMIN)
-function setDefaultSlippage(uint256 slippageBP) external onlyRole(ADMIN)
+// Single pool swap
+function swapExactInputSingle(
+    address tokenIn,
+    address tokenOut,
+    uint24 fee,
+    uint256 amountIn,
+    uint256 amountOutMinimum,
+    uint160 sqrtPriceLimitX96
+) external onlyReportingManager whenNotPaused returns (uint256 amountOut)
+
+// Multi-hop swap using encoded V3 path
+function swapExactInput(
+    bytes calldata path,
+    uint256 amountIn,
+    uint256 amountOutMinimum
+) external onlyReportingManager whenNotPaused returns (uint256 amountOut)
 ```
 
-#### Emergency Functions
+PancakeSwap V3 Swap
 ```solidity
-function pause() external onlyRole(ADMIN)
-function unpause() external onlyRole(ADMIN)
-function emergencyWithdraw(address token, uint256 amount, address to) external onlyRole(ADMIN)
+function swapExactInputSinglePancakeV3(
+    address tokenIn,
+    address tokenOut,
+    uint24 fee,
+    uint256 amountIn,
+    uint256 amountOutMinimum,
+    uint160 sqrtPriceLimitX96
+) external onlyReportingManager returns (uint256 amountOut)
 ```
 
-## Integration with Solana
-
-### Message Flow
-
-#### From Solana to Ethereum
-1. Solana external_aggregator_wormhole program initiates transfer
-2. Wormhole Token Bridge locks tokens on Solana
-3. Guardian network validates and signs VAA
-4. Ethereum contract receives and verifies VAA
-5. Tokens are minted/unlocked on Ethereum
-6. Strategy execution begins automatically
-
-#### From Ethereum to Solana
-1. Ethereum contract calls `sendTokensToSolana()`
-2. Wormhole Core publishes message with token data
-3. Guardian network creates VAA for Solana
-4. Solana program receives and processes VAA
-5. Tokens are unlocked/minted in Solana vault
-
-### Supported Networks
-
-#### Wormhole Chain IDs
-- **Solana**: 1
-- **Ethereum**: 2
-- **Sepolia**: 2 (testnet)
-
-#### Token Standards
-- **Solana**: SPL tokens
-- **Ethereum**: ERC-20 tokens
-- **Cross-chain**: Wormhole wrapped tokens
-
-## Configuration
-
-### Router Addresses
-
-#### Mainnet
-```javascript
-const ROUTERS = {
-  uniswapV2: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-  uniswapV3: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-  uniswapV4: "0x...", // TBD when V4 launches
-  wormholeCore: "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B",
-  wormholeTokenBridge: "0x3ee18B2214AFF97000D974cf647E7C347E8fa585"
-};
-```
-
-#### Sepolia Testnet
-```javascript
-const ROUTERS = {
-  uniswapV2: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-  uniswapV3: "0xE592427A0AEce92De3Edee1F18E0157C05861564", 
-  wormholeCore: "0x706abc4E45D419950511e474C7B9Ed348A4a716c",
-  wormholeTokenBridge: "0xF890982f9310df57d00f659cf4fd87e65adEd8d7"
-};
-```
-
-### Swap Configuration
-
+Admin Controls
 ```solidity
-SwapInstruction memory instruction = SwapInstruction({
-    fromToken: USDC_ADDRESS,
-    toToken: WETH_ADDRESS,
-    amountIn: 1000e6, // 1000 USDC
-    minAmountOut: 0, // Calculate dynamically
-    route: [SwapRoute({
-        router: RouterType.V3,
-        path: new address[](0),
-        encodedPath: abi.encodePacked(USDC_ADDRESS, uint24(500), WETH_ADDRESS),
-        fee: 500, // 0.05%
-        hookData: ""
-    })],
-    deadline: block.timestamp + 300,
-    maxSlippageBP: 300 // 3%
-});
+function pause() external onlyAdmin
+function unpause() external onlyAdmin
+function withdraw(address token, uint256 amount, address to) external onlyAdmin
+function setPathValidationEnabled(bool enabled) external onlyAdmin
+function allowPath(bytes calldata path) external onlyAdmin
+function disallowPath(bytes calldata path) external onlyAdmin
+function setUniswapRouter(address newRouter) external onlyAdmin
+function setPancakeRouter(address newRouter) external onlyAdmin
+function setSolanaAggregatorAddress(bytes32 newAddr) external onlyAdmin
+function setUnderlyingToken(address newToken) external onlyAdmin
+```
+
+Views
+```solidity
+function getMessageFee() external view returns (uint256)
 ```
 
 ## Events
 
-### Cross-Chain Events
+Core/Bridge
 ```solidity
-event TokensReceived(address indexed token, uint256 amount, bytes32 indexed vaaHash);
-event TokensSentBack(address indexed token, uint256 amount, uint64 sequence);
-event WormholeMessageReceived(bytes32 indexed vaaHash, uint64 sequence);
+event Initialized(address wormhole, address tokenBridge, address underlyingToken, bytes32 solanaAggregatorAddress, address swapRouter, address pancakeRouter, uint256 timestamp);
+event Deposited(address manager, address token, uint256 amount, uint256 timestamp);
+event BridgedOut(address token, uint256 amount, uint16 destinationChainId, bytes32 recipient, uint64 sequence, uint256 timestamp);
+event BridgedIn(address token, uint256 amount, uint16 sourceChainId, address manager, uint256 timestamp);
+event Withdrawn(address manager, address token, uint256 amount, address to, uint256 timestamp);
 ```
 
-### Strategy Events
+Swaps/Validation/Config
 ```solidity
-event SwapExecuted(address indexed fromToken, address indexed toToken, uint256 amountIn, uint256 amountOut, RouterType router);
-event ValueReported(address indexed baseToken, uint256 totalValue, uint64 sequence);
+event Swapped(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 timestamp);
+event PancakeSwapped(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 timestamp);
+event PathAllowed(bytes32 pathHash, bytes path, uint256 timestamp);
+event PathDisallowed(bytes32 pathHash, bytes path, uint256 timestamp);
+event PathValidationToggled(bool enabled, uint256 timestamp);
+event UniswapRouterUpdated(address oldRouter, address newRouter, uint256 timestamp);
+event PancakeRouterUpdated(address oldRouter, address newRouter, uint256 timestamp);
+event SolanaAggregatorAddressUpdated(bytes32 oldAddress, bytes32 newAddress, uint256 timestamp);
+event UnderlyingTokenUpdated(address oldToken, address newToken, uint256 timestamp);
 ```
 
-### Administrative Events
-```solidity
-event TokenWhitelisted(address indexed token, bool whitelisted);
-event EmitterRegistered(bytes32 indexed emitter, bool registered);
-event SlippageUpdated(uint256 oldSlippage, uint256 newSlippage);
-```
+## Errors
 
-## Security Considerations
+`Unauthorized`, `InvalidAmount`, `InsufficientBalance`, `InsufficientBalanceToken`, `ApprovalFailed`, `InsufficientOutput`, `EmptyPath`, `PathNotAllowed`, `InvalidRouterAddress`, `InvalidSolanaAggregatorAddress`, `InvalidUnderlyingTokenAddress`.
 
-### Access Control
-- **Multi-signature**: Use multi-sig wallets for admin functions
-- **Role Separation**: Separate roles for different operations
-- **Time Delays**: Consider timelock for critical changes
+## Usage (Scripts)
 
-### Cross-Chain Security
-- **VAA Verification**: Always verify Wormhole VAAs
-- **Replay Protection**: Prevent duplicate message processing
-- **Emitter Validation**: Only accept messages from authorized Solana programs
+- Deploy upgradeable proxy: `scripts/deploy_bss.js`
+- Uniswap V3 single‑pool swap: `scripts/uniswapActions/swapExactInputSingle.js`
+- PancakeSwap V3 single‑pool swap: `scripts/pancakeswapActions/swapExactInputSinglePancakeV3.js`
+- Bridge out (generic): `scripts/evmRelayerActions/bridgeOut.js`
 
-### DeFi Security
-- **Slippage Protection**: Always set reasonable slippage limits
-- **Token Validation**: Only interact with whitelisted tokens
-- **MEV Protection**: Consider using private mempools for large trades
+Grant the `REPORTING_MANAGER` role to the operator that will call swap/bridge functions.
 
-## Testing
+## Setup
 
 ```bash
-# Run all tests
-npm test
-
-# Run specific test suite
-npx hardhat test test/CustomStrategyWormhole.test.js
-
-# Test with coverage
-npx hardhat coverage
+npm install
+npx hardhat compile
 ```
 
-## Monitoring
+Environment variables (examples)
+```bash
+ETHEREUM_RPC_URL=...
+BSC_RPC_URL=...
+PRIVATE_KEY=...
+```
 
-### Key Metrics
-- Cross-chain transfer success rate
-- Strategy execution performance
-- Gas optimization metrics
-- Value reporting accuracy
+## Notes & Limitations
 
-### Alerts
-- Failed Wormhole message processing
-- Slippage exceeded events
-- Emergency pause activations
-- Unauthorized access attempts
-
-## Support
-
-### Documentation
-- [Wormhole Documentation](https://docs.wormhole.com/)
-- [Uniswap V3 Documentation](https://docs.uniswap.org/protocol/V3/introduction)
-- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
-
-### Troubleshooting
-- Check Wormhole VAA validity on [Wormholescan](https://wormholescan.io/)
-- Verify token whitelist status
-- Confirm network configurations
-- Review gas settings for transactions
+- Path validation is optional and based on V3 path hashes via `allowPath`/`disallowPath`.
+- Bridge functions delegate security to Wormhole TokenBridge contracts; no custom VAA parsing/replay protection is implemented in this contract.
+- No Uniswap V2/V4 support; no portfolio valuation or token allowlists.
 
 ## License
 
-MIT License 
+MIT License
