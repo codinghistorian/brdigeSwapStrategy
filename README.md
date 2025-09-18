@@ -22,7 +22,15 @@ No Uniswap V2/V4 integrations, token whitelists, portfolio tracking, or custom V
 - Solana WormholeAssetManager (base58): `2Bqh5uNnKHXQBNLfkK8Je8xvZ6SUis5RH4Ngif4hT3FL`
 - Solana Aggregator Address (hex): `0x11a28cdc1df53b02a753adf7d6f498ce0677d7b7e1018f41d806a335fcb921f7`
 
-For EVM relayer usage, see: `evm_relayer_use_guide`.
+### BSC Mainnet Initialization (to bridge to this contract, use id 2)
+
+- Wormhole Core: `0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B`
+- Wormhole TokenBridge: `0xB6F6D86a8f9879A9c87f643768d9efc38c1Da6E7`
+- Underlying Token (USDT): `0x55d398326f99059fF775485246999027B3197955`
+- Uniswap V3 Router (SwapRouter02): `0xB971eF87ede563556b2ED4b1C0b0019111Dd85d2`
+- PancakeSwap Router (Smart Router): `0x13f4EA83D0bd40E75C8222255bc855a974568Dd4`
+- Solana WormholeAssetManager (base58): `2Bqh5uNnKHXQBNLfkK8Je8xvZ6SUis5RH4Ngif4hT3FL`
+- Solana Aggregator Address (hex): `0x11a28cdc1df53b02a753adf7d6f498ce0677d7b7e1018f41d806a335fcb921f7`
 
 ## Contract Overview
 
